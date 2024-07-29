@@ -1,7 +1,5 @@
-import os
-from util import save_data
-
 class ExtractData:
+
     def get_data(path_file):
         try:
             with open(path_file, 'r') as archivo:
@@ -11,7 +9,7 @@ class ExtractData:
                 print(f"{idx}: {linea}")  
             
         except FileNotFoundError:
-            print(f"\nNo existe la ruta {path_file}, o aún no hay datos\n")
+            print(f"\nNo encuentra la ruta {path_file}. Comprueba que exista, que haya datos, y tu directorio debe ser la raiz del proyecto\n")
             return []
         
       

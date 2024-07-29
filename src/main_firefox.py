@@ -54,7 +54,7 @@ class MainFirefox:
             password_field.send_keys(Keys.RETURN)
             
             # Esperar a que el enlace del perfil sea visible para confirmar el inicio de sesión
-            WebDriverWait(self.driver, 10).until(
+            WebDriverWait(self.driver, 7).until(
                 EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
             )
             print("\nInicio de sesión exitoso.")

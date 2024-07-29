@@ -1,10 +1,11 @@
 import getpass
-
+import os
 from src.extract_data import ExtractData
 from src.main_firefox import MainFirefox
 
 if __name__ == "__main__":
-    driver_path = "C:/Users/alvar/Documents/GeckoDriver/geckodriver.exe"
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    driver_path = os.path.join(current_dir, 'gecko\geckodriver.exe')
 
     while True:
 
@@ -39,20 +40,20 @@ if __name__ == "__main__":
 
         elif option == "2":
             username = input("Usuario: ")
-            file_path = f'../data/{username}/lost_followers.txt'
+            file_path = f'data/{username}/lost_followers.txt'
             print("\nUsuarios que han dejado de seguirte:\n")           
 
             ExtractData.get_data(file_path)
 
         elif option == "3":
             username = input("Usuario: ")
-            file_path = f'../data/{username}/not_following_back.txt'
+            file_path = f'data/{username}/not_following_back.txt'
             print("\nUsuarios que no te siguen de vuelta:\n")           
 
             ExtractData.get_data(file_path)
             
         elif option == "0":
-            print("\nSaliendo...")
+            print("\nSaliendo...\n")
             break
         else:
-            print("\nOpción no válida. Intente nuevamente.")
+            print("\nOpción no válida. Intente nuevamente.\n")
