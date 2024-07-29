@@ -6,7 +6,7 @@ from src.main_firefox import MainFirefox
 if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     driver_path = os.path.join(current_dir, 'gecko\geckodriver.exe')
-
+    username = input("\nUsuario: ")
     while True:
 
         print("\nOpciones:\n")
@@ -18,11 +18,10 @@ if __name__ == "__main__":
         option = input("\nSeleccione una opción: ")
 
         if option == "1":
-            username = input("\nUsuario: ")
+            print(f'\nUsuario: {username}')
             password =  getpass.getpass(prompt='Contraseña: ')
 
             app = MainFirefox(driver_path, username, password)
-            data = ExtractData()
             app.start()
             app.login()
             app.navigate_to_profile()
@@ -39,18 +38,19 @@ if __name__ == "__main__":
             app.quit()
 
         elif option == "2":
-            username = input("Usuario: ")
+            #username = input("Usuario: ")
             file_path = f'data/{username}/lost_followers.txt'
             print("\nUsuarios que han dejado de seguirte:\n")           
 
             ExtractData.get_data(file_path)
 
         elif option == "3":
-            username = input("Usuario: ")
+            #username = input("Usuario: ")
             file_path = f'data/{username}/not_following_back.txt'
             print("\nUsuarios que no te siguen de vuelta:\n")           
 
             ExtractData.get_data(file_path)
+
             
         elif option == "0":
             print("\nSaliendo...\n")

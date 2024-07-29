@@ -9,6 +9,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+
+xpath = {
+   "decline_cookies": "/html/body/div[5]/div[1]/div/div[2]/div/div/div/div/div[2]/div/button[2]",
+    "save_login_not_now_button": "//div[contains(text(), 'Ahora no')]",
+    "notification_not_now_button": "//button[contains(text(), 'Ahora no')]",
+    "followers":"/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[3]/ul/li[2]/div/a",
+    "followings":"/html/body/div[2]/div/div/div[2]/div/div/div[1]/div[2]/div/div[1]/section/main/div/header/section[3]/ul/li[3]/div/a"
+}
+
 
 class MainFirefox:
     def __init__(self, driver_path, username, password):
@@ -23,48 +33,27 @@ class MainFirefox:
 
         # Configuración de las opciones de Firefox
         self.web_options = Options()
-        self.web_options.add_argument("--headless")  # Ejecutar en modo headless (sin interfaz gráfica)
+        #self.web_options.add_argument("--headless")  # Ejecutar en modo headless (sin interfaz gráfica)
+        self.web_options.add_argument("--incognito")  # Ejecutar en modo incógnito
 
         # Inicializar el navegador
-        #self.driver = webdriver.Firefox(service=self.service, options=self.web_options)
-        self.driver = webdriver.Firefox(service=self.service)
+        self.driver = webdriver.Firefox(service=self.service, options=self.web_options)
         
     def start(self):
+        self.driver.get(self.url)
+        print("\nNavegador iniciado.")
+        time.sleep(3)
+ 
+    def quitar_cookies(self):
         try:
-            time.sleep(3)
-            self.driver.get(self.url)
-            print("\nNavegador iniciado.")
-            time.sleep(3)
-        except Exception as e:
-            print("Error al iniciar el navegador:", e)
-            self.driver.quit()
-            exit()
-            
-    def handle_verification_code(self, driver):
-        try:
-            # Esperar a que el campo de verificación del código esté presente
-            verification_field = WebDriverWait(driver, 5).until(
-                EC.presence_of_element_located((By.NAME, 'verificationCode'))
+            cookie_warning = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, xpath["decline_cookies"]))
             )
-            print("\nSe requiere un código de verificación.\n")
-            
-            # Solicitar al usuario que ingrese el código de verificación
-            verification_code = input("Por favor, ingresa el código de verificación: ")
-            verification_field.send_keys(verification_code)
-            verification_field.send_keys(Keys.RETURN)
-            
-            # Esperar a que el inicio de sesión sea exitoso después de la verificación
-            WebDriverWait(driver, 7).until(
-                EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
-            )
-            print("\nInicio de sesión exitoso después de la verificación.")
-            return True
+            cookie_warning[0].click()
         except:
-            # Si no se requiere el código de verificación o falla la espera, continuar
-            return False
-        
+            pass
     
-    def login(self):
+    def iniciar_sesion(self):
         try:
             # Encontrar el campo de usuario y contraseña
             username_field = self.driver.find_element(By.NAME, 'username')
@@ -77,20 +66,61 @@ class MainFirefox:
             # Enviar el formulario
             password_field.send_keys(Keys.RETURN)
             
-            # Esperar a que la página cargue y verificar si se necesita un código de verificación
-            time.sleep(2)  # Dar tiempo para que la página cargue la ventana de verificación si existe
-            
-            # Llamar a la función auxiliar para manejar la verificación del código
-            if not self.handle_verification_code(self.driver):
-                # Si no se requiere verificación, esperar a que el enlace del perfil sea visible
+            try:
+                verification_field = WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located((By.NAME, 'verificationCode'))
+                )            
+                # Solicitar al usuario que ingrese el código de verificación
+                verification_code = input("Código: ")
+                verification_field.send_keys(verification_code)
+                verification_field.send_keys(Keys.RETURN)
+                
+                # Esperar a que el inicio de sesión sea exitoso después de la verificación
                 WebDriverWait(self.driver, 7).until(
                     EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
                 )
-                print("\nInicio de sesión exitoso.")
+                print("\nCódigo verificado.")
+            except:
+                # Si no se requiere el código de verificación o falla la espera, continuar
+                WebDriverWait(self.driver, 7).until(
+                    EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
+                )
+                pass
+                
         except Exception as e:
-            print("\nError al iniciar sesión:", e)
+            print("\nError al iniciar sesión:")
             self.driver.quit()
             exit()
+        
+    def quitar_save_login_info(self):
+        try:
+            # Click "Not now" and ignore Save-login info prompt
+            save_login_prompt = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, xpath["save_login_not_now_button"]))
+            )
+            save_login_prompt.click()
+        except:
+            pass
+        
+    def quitar_notificaciones(self):
+        try:
+            # Click "not now" on notifications prompt
+            notifications_prompt = WebDriverWait(self.driver, 3).until(
+                EC.presence_of_element_located((By.XPATH, xpath["notification_not_now_button"]))
+            )
+            notifications_prompt.click()
+        except:
+            pass
+    
+    def login(self):
+        self.quitar_cookies()
+        self.iniciar_sesion()
+        self.quitar_save_login_info()
+        self.quitar_notificaciones()
+        
+        # Esperar a que la página cargue y verificar si se necesita un código de verificación
+        print("\nInicio de sesión exitoso.")
+        
 
 
  
@@ -108,7 +138,7 @@ class MainFirefox:
 
     def click_followers_link(self):
         try:
-            followers_link = self.driver.find_element(By.PARTIAL_LINK_TEXT, "seguidores")
+            followers_link = self.driver.find_element(By.XPATH, xpath["followers"])
             followers_link.click()
             print("\nCargando lista de seguidores...")
             time.sleep(5)
@@ -119,7 +149,7 @@ class MainFirefox:
 
     def click_followings_link(self):
         try:
-            followings_link = self.driver.find_element(By.PARTIAL_LINK_TEXT, "seguidos")
+            followings_link = self.driver.find_element(By.XPATH, xpath["followings"])
             followings_link.click()
             print("\nCargando lista de seguidos...")
             time.sleep(5)
@@ -127,7 +157,7 @@ class MainFirefox:
             print("Error al hacer clic en el enlace de seguidos:", e)
             self.driver.quit()
             exit()
-
+    
     def scroll_list(self):
         try:
             # Localizar el contenedor de seguidores usando una clase identificativa principal
