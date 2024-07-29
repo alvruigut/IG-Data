@@ -39,7 +39,31 @@ class MainFirefox:
             print("Error al iniciar el navegador:", e)
             self.driver.quit()
             exit()
-
+            
+    def handle_verification_code(self, driver):
+        try:
+            # Esperar a que el campo de verificación del código esté presente
+            verification_field = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.NAME, 'verificationCode'))
+            )
+            print("\nSe requiere un código de verificación.\n")
+            
+            # Solicitar al usuario que ingrese el código de verificación
+            verification_code = input("Por favor, ingresa el código de verificación: ")
+            verification_field.send_keys(verification_code)
+            verification_field.send_keys(Keys.RETURN)
+            
+            # Esperar a que el inicio de sesión sea exitoso después de la verificación
+            WebDriverWait(driver, 7).until(
+                EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
+            )
+            print("\nInicio de sesión exitoso después de la verificación.")
+            return True
+        except:
+            # Si no se requiere el código de verificación o falla la espera, continuar
+            return False
+        
+    
     def login(self):
         try:
             # Encontrar el campo de usuario y contraseña
@@ -53,15 +77,21 @@ class MainFirefox:
             # Enviar el formulario
             password_field.send_keys(Keys.RETURN)
             
-            # Esperar a que el enlace del perfil sea visible para confirmar el inicio de sesión
-            WebDriverWait(self.driver, 7).until(
-                EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
-            )
-            print("\nInicio de sesión exitoso.")
+            # Esperar a que la página cargue y verificar si se necesita un código de verificación
+            time.sleep(2)  # Dar tiempo para que la página cargue la ventana de verificación si existe
+            
+            # Llamar a la función auxiliar para manejar la verificación del código
+            if not self.handle_verification_code(self.driver):
+                # Si no se requiere verificación, esperar a que el enlace del perfil sea visible
+                WebDriverWait(self.driver, 7).until(
+                    EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
+                )
+                print("\nInicio de sesión exitoso.")
         except Exception as e:
-            print("\nError al iniciar sesión.\n")
+            print("\nError al iniciar sesión:", e)
             self.driver.quit()
             exit()
+
 
  
 
@@ -100,13 +130,14 @@ class MainFirefox:
 
     def scroll_list(self):
         try:
-            # Localizar el contenedor de seguidores usando la clase proporcionada
-            modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy.x1ccrb07.xtf3nb5.x1pc53ja.x1lliihq.x1iyjqo2.xs83m0k.xz65tgg.x1rife3k.x1n2onr6')
+            # Localizar el contenedor de seguidores usando una clase identificativa principal
+            modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy')
             last_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
             print("\nLeyendo datos...\n")
+            
             while True:
                 self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-                time.sleep(2)  # Esperar a que se cargue más contenido
+                time.sleep(1.5)  # Ajustar tiempo de espera según sea necesario
 
                 # Comprobar si el texto "Sugerencias para ti" está presente
                 if "Sugerencias para ti" in self.driver.page_source:
