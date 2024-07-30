@@ -123,13 +123,11 @@ class MainFirefox:
         
 
 
- 
-
-    def navigate_to_profile(self):
+    def navigate_to_profile(self,username):
         try:
-            profile_url = f'https://www.instagram.com/{self.username}/'
+            profile_url = f'https://www.instagram.com/{username}/'
             self.driver.get(profile_url)
-            print("\nPerfil cargado.")
+            print("\nPerfil cargado...")
             time.sleep(5)
         except Exception as e:
             print("Error al navegar al perfil:", e)
@@ -158,33 +156,70 @@ class MainFirefox:
             self.driver.quit()
             exit()
     
-    def scroll_list(self):
+    def scroll_followers(self):
+        conj_seguidores = {}
+        try:
+            # Extraer el número de seguidores y los seguidores actuales
+            num_followers = save_data.extract_number_of_followers(self.driver)   
+        except Exception as e:
+            print("Error al extraer los seguidores:", e)
+            self.driver.quit()
+            exit()
+
         try:
             # Localizar el contenedor de seguidores usando una clase identificativa principal
             modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy')
-            last_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
             print("\nLeyendo datos...\n")
-            
-            while True:
+                        
+            for _ in range(300000):
+                # Desplazar el contenedor hacia abajo
                 self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-                time.sleep(1.5)  # Ajustar tiempo de espera según sea necesario
-
-                # Comprobar si el texto "Sugerencias para ti" está presente
-                if "Sugerencias para ti" in self.driver.page_source:
+                time.sleep(0.5)
+                spans = self.driver.find_elements(By.CSS_SELECTOR, 'span._ap3a._aaco._aacw._aacx._aad7._aade')
+                conj_seguidores = {follower.text for follower in spans[:num_followers]}
+                # Obtener todos los elementos de seguidores
+                # Verificar si se ha alcanzado el número deseado de seguidores
+                if len(conj_seguidores) >= num_followers:
                     break
 
-                new_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
-                if new_height == last_height:
+        except Exception as e:
+            print("Error al desplazar la ventana:", e)
+            self.driver.quit()
+            exit()
+            
+    def scroll_followings(self):
+        conj_seguidores = {}
+        try:
+            # Extraer el número de seguidores y los seguidores actuales
+            num_followers = save_data.extract_number_of_followings(self.driver)   
+        except Exception as e:
+            print("Error al extraer los seguidores:", e)
+            self.driver.quit()
+            exit()
+
+        try:
+            # Localizar el contenedor de seguidores usando una clase identificativa principal
+            modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy')
+            print("\nLeyendo datos...\n")
+                        
+            for _ in range(300000):
+                # Desplazar el contenedor hacia abajo
+                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
+                time.sleep(0.5)
+                spans = self.driver.find_elements(By.CSS_SELECTOR, 'span._ap3a._aaco._aacw._aacx._aad7._aade')
+                conj_seguidores = {follower.text for follower in spans[:num_followers]}
+                # Obtener todos los elementos de seguidores
+                # Verificar si se ha alcanzado el número deseado de seguidores
+                if len(conj_seguidores) >= num_followers:
                     break
-                last_height = new_height
 
         except Exception as e:
             print("Error al desplazar la ventana:", e)
             self.driver.quit()
             exit()
 
-    def save_followers_unfollows(self):
-        data_dir = os.path.join(os.path.dirname(__file__), '../data', self.username)
+    def save_followers_unfollows(self,username):
+        data_dir = os.path.join(os.path.dirname(__file__), '../data', username)
         os.makedirs(data_dir, exist_ok=True)
 
         try:
@@ -223,8 +258,8 @@ class MainFirefox:
             self.driver.quit()
             exit()
 
-    def save_followings(self):
-        data_dir = os.path.join(os.path.dirname(__file__), '../data', self.username)
+    def save_followings(self,username):
+        data_dir = os.path.join(os.path.dirname(__file__), '../data', username)
         os.makedirs(data_dir, exist_ok=True)
 
         try:
@@ -257,8 +292,8 @@ class MainFirefox:
             self.driver.quit()
             exit()
 
-    def compare_followers_and_followings(self):
-        data_dir = os.path.join(os.path.dirname(__file__), '../data', self.username)
+    def compare_followers_and_followings(self,username):
+        data_dir = os.path.join(os.path.dirname(__file__), '../data', username)
         os.makedirs(data_dir, exist_ok=True)
 
         try:
