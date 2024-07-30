@@ -97,7 +97,6 @@ class MainFirefox:
                 new_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
                 if new_height == last_height:
                     i+=1  
-                    print(i)                           
                     if i == 5:
                         break
                 else:
