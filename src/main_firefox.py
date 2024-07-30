@@ -2,14 +2,12 @@ import os
 import time
 from datetime import datetime
 from selenium import webdriver
-from util import save_data
+from util import save_data, login_util
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
+
 
 xpath = {
    "decline_cookies": "/html/body/div[5]/div[1]/div/div[2]/div/div/div/div/div[2]/div/button[2]",
@@ -33,8 +31,7 @@ class MainFirefox:
 
         # Configuración de las opciones de Firefox
         self.web_options = Options()
-        #self.web_options.add_argument("--headless")  # Ejecutar en modo headless (sin interfaz gráfica)
-        self.web_options.add_argument("--incognito")  # Ejecutar en modo incógnito
+        self.web_options.add_argument("--private")  # Ejecutar en modo incógnito
 
         # Inicializar el navegador
         self.driver = webdriver.Firefox(service=self.service, options=self.web_options)
@@ -42,87 +39,17 @@ class MainFirefox:
     def start(self):
         self.driver.get(self.url)
         print("\nNavegador iniciado.")
-        time.sleep(3)
+        time.sleep(2)
  
-    def quitar_cookies(self):
-        try:
-            cookie_warning = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, xpath["decline_cookies"]))
-            )
-            cookie_warning[0].click()
-        except:
-            pass
-    
-    def iniciar_sesion(self):
-        try:
-            # Encontrar el campo de usuario y contraseña
-            username_field = self.driver.find_element(By.NAME, 'username')
-            password_field = self.driver.find_element(By.NAME, 'password')
 
-            # Introducir las credenciales
-            username_field.send_keys(self.username)
-            password_field.send_keys(self.password)
-
-            # Enviar el formulario
-            password_field.send_keys(Keys.RETURN)
-            
-            try:
-                verification_field = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located((By.NAME, 'verificationCode'))
-                )            
-                # Solicitar al usuario que ingrese el código de verificación
-                verification_code = input("Código: ")
-                verification_field.send_keys(verification_code)
-                verification_field.send_keys(Keys.RETURN)
-                
-                # Esperar a que el inicio de sesión sea exitoso después de la verificación
-                WebDriverWait(self.driver, 7).until(
-                    EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
-                )
-                print("\nCódigo verificado.")
-            except:
-                # Si no se requiere el código de verificación o falla la espera, continuar
-                WebDriverWait(self.driver, 7).until(
-                    EC.visibility_of_element_located((By.XPATH, f"//a[contains(@href, '/{self.username}/')]"))
-                )
-                pass
-                
-        except Exception as e:
-            print("\nError al iniciar sesión:")
-            self.driver.quit()
-            exit()
-        
-    def quitar_save_login_info(self):
-        try:
-            # Click "Not now" and ignore Save-login info prompt
-            save_login_prompt = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, xpath["save_login_not_now_button"]))
-            )
-            save_login_prompt.click()
-        except:
-            pass
-        
-    def quitar_notificaciones(self):
-        try:
-            # Click "not now" on notifications prompt
-            notifications_prompt = WebDriverWait(self.driver, 3).until(
-                EC.presence_of_element_located((By.XPATH, xpath["notification_not_now_button"]))
-            )
-            notifications_prompt.click()
-        except:
-            pass
     
     def login(self):
-        self.quitar_cookies()
-        self.iniciar_sesion()
-        self.quitar_save_login_info()
-        self.quitar_notificaciones()
-        
-        # Esperar a que la página cargue y verificar si se necesita un código de verificación
+        login_util.quitar_cookies(self.driver)
+        login_util.iniciar_sesion(self.driver, self.username, self.password)
+        login_util.quitar_save_login_info(self.driver)
+        login_util.quitar_notificaciones(self.driver)
         print("\nInicio de sesión exitoso.")
         
-
-
     def navigate_to_profile(self,username):
         try:
             profile_url = f'https://www.instagram.com/{username}/'
@@ -139,79 +66,43 @@ class MainFirefox:
             followers_link = self.driver.find_element(By.XPATH, xpath["followers"])
             followers_link.click()
             print("\nCargando lista de seguidores...")
-            time.sleep(5)
+            time.sleep(3)
         except Exception as e:
             print("Error al hacer clic en el enlace de seguidores:", e)
             self.driver.quit()
             exit()
-
+            
+            
     def click_followings_link(self):
         try:
             followings_link = self.driver.find_element(By.XPATH, xpath["followings"])
             followings_link.click()
             print("\nCargando lista de seguidos...")
-            time.sleep(5)
+            time.sleep(3)
         except Exception as e:
             print("Error al hacer clic en el enlace de seguidos:", e)
             self.driver.quit()
             exit()
     
-    def scroll_followers(self):
-        conj_seguidores = {}
-        try:
-            # Extraer el número de seguidores y los seguidores actuales
-            num_followers = save_data.extract_number_of_followers(self.driver)   
-        except Exception as e:
-            print("Error al extraer los seguidores:", e)
-            self.driver.quit()
-            exit()
-
+    def scroll_list(self):
         try:
             # Localizar el contenedor de seguidores usando una clase identificativa principal
             modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy')
-            print("\nLeyendo datos...\n")
-                        
-            for _ in range(300000):
-                # Desplazar el contenedor hacia abajo
+            last_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
+            print("\nObteniendo datos...\n")
+            i=0
+            while True:
                 self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-                time.sleep(0.5)
-                spans = self.driver.find_elements(By.CSS_SELECTOR, 'span._ap3a._aaco._aacw._aacx._aad7._aade')
-                conj_seguidores = {follower.text for follower in spans[:num_followers]}
-                # Obtener todos los elementos de seguidores
-                # Verificar si se ha alcanzado el número deseado de seguidores
-                if len(conj_seguidores) >= num_followers:
-                    break
-
-        except Exception as e:
-            print("Error al desplazar la ventana:", e)
-            self.driver.quit()
-            exit()
-            
-    def scroll_followings(self):
-        conj_seguidores = {}
-        try:
-            # Extraer el número de seguidores y los seguidores actuales
-            num_followers = save_data.extract_number_of_followings(self.driver)   
-        except Exception as e:
-            print("Error al extraer los seguidores:", e)
-            self.driver.quit()
-            exit()
-
-        try:
-            # Localizar el contenedor de seguidores usando una clase identificativa principal
-            modal = self.driver.find_element(By.CSS_SELECTOR, 'div.xyi19xy')
-            print("\nLeyendo datos...\n")
-                        
-            for _ in range(300000):
-                # Desplazar el contenedor hacia abajo
-                self.driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", modal)
-                time.sleep(0.5)
-                spans = self.driver.find_elements(By.CSS_SELECTOR, 'span._ap3a._aaco._aacw._aacx._aad7._aade')
-                conj_seguidores = {follower.text for follower in spans[:num_followers]}
-                # Obtener todos los elementos de seguidores
-                # Verificar si se ha alcanzado el número deseado de seguidores
-                if len(conj_seguidores) >= num_followers:
-                    break
+                time.sleep(1)  
+                new_height = self.driver.execute_script("return arguments[0].scrollHeight", modal)
+                if new_height == last_height:
+                    i+=1  
+                    print(i)                           
+                    if i == 5:
+                        break
+                else:
+                    i=0
+                last_height = new_height
 
         except Exception as e:
             print("Error al desplazar la ventana:", e)

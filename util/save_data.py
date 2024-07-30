@@ -30,9 +30,13 @@ def write_not_following_back(file_path, not_following_back):
         file.write('\n'.join(not_following_back))
 
 def extract_number_of_followers(driver):
-    followers_link = driver.find_element(By.PARTIAL_LINK_TEXT, "seguidores")
-    num_followers = int(followers_link.find_element(By.TAG_NAME, 'span').text)
-    return num_followers
+    try:
+        followers_link = driver.find_element(By.PARTIAL_LINK_TEXT, "seguidores")
+        num_followers = int(followers_link.find_element(By.TAG_NAME, 'span').text)
+        return num_followers
+    except:
+        print("No se encontró el número de seguidores")
+        return 0
 
 def extract_number_of_followings(driver):
     followings_link = driver.find_element(By.PARTIAL_LINK_TEXT, "seguidos")

@@ -27,11 +27,11 @@ if __name__ == "__main__":
             app.login()
             app.navigate_to_profile(username)
             app.click_followers_link()
-            app.scroll_followers()
+            app.scroll_list()
             app.save_followers_unfollows(username)
             app.navigate_to_profile(username)
             app.click_followings_link()
-            app.scroll_followings()
+            app.scroll_list()
             app.save_followings(username)
             
             app.compare_followers_and_followings(username)
@@ -47,11 +47,11 @@ if __name__ == "__main__":
             app.login()
             app.navigate_to_profile(usernameToSearch)
             app.click_followers_link()
-            app.scroll_followers()
+            app.scroll_list()
             app.save_followers_unfollows(usernameToSearch)
             app.navigate_to_profile(usernameToSearch)
             app.click_followings_link()
-            app.scroll_followings()
+            app.scroll_list()
             app.save_followings(usernameToSearch)
             
             app.compare_followers_and_followings(usernameToSearch)
@@ -64,6 +64,7 @@ if __name__ == "__main__":
             print("\nUsuarios que han dejado de seguirte:\n")           
 
             ExtractData.get_data(file_path)
+            
 
         elif option == "4":
             username = input("Usuario: ")
